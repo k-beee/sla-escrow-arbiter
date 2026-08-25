@@ -1,5 +1,7 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 
+import json
+import re
 from genlayer import *
 import genlayer.gl as gl
 
@@ -8,6 +10,24 @@ STATUS_CLAIMED = "CLAIMED"
 STATUS_RESOLVING = "RESOLVING"
 STATUS_COMPLETED = "COMPLETED"
 STATUS_REFUNDED = "REFUNDED"
+
+
+def _parse_verdict_json(raw: str) -> dict:
+    """Defensive JSON extraction from LLM output."""
+    if isinstance(raw, dict):
+        return raw
+    if not isinstance(raw, str):
+        return {}
+    first = raw.find("{")
+    last = raw.rfind("}")
+    if first == -1 or last == -1 or last < first:
+        return {}
+    snippet = raw[first : last + 1]
+    snippet = re.sub(r",(?!\s*?[\{\[\"\'\w])", "", snippet)
+    try:
+        return json.loads(snippet)
+    except (json.JSONDecodeError, ValueError):
+        return {}
 
 
 def _normalize_address(addr: str) -> str:
