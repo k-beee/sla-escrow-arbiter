@@ -53,3 +53,15 @@ class SLAEscrowArbiter(gl.Contract):
 
         self.escrow_amount = gl.message.value
         self.status = STATUS_CLAIMED
+
+    @gl.public.write
+    def submit_deliverable(self, evidence_url: str) -> None:
+        """Contractor submits evidence URL for verification."""
+        if _normalize_address(gl.message.sender_address.as_hex) != _normalize_address(self.contractor.as_hex):
+            gl.vm.UserError("Only the contractor can submit deliverable")
+        if self.status != STATUS_CLAIMED:
+            gl.vm.UserError("Escrow must be funded before deliverable submission")
+        if not evidence_url.startswith("http://") and not evidence_url.startswith("https://"):
+            gl.vm.UserError("Evidence URL must be a valid HTTP/HTTPS endpoint")
+
+        self.evidence_url = evidence_url
