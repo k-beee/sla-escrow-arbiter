@@ -600,34 +600,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Activity Log */}
-              <div className="border-t border-white/[0.08] pt-4 space-y-2">
-                <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 uppercase tracking-wider">
-                  <div className="flex items-center gap-1.5">
-                    <TerminalSquare className="w-3.5 h-3.5 text-[#00f0ff]" />
-                    <span>Consensus Execution Ledger</span>
-                  </div>
-                  <span>{txLog.length} Events</span>
-                </div>
-                <div className="bg-[#05070a] border border-white/[0.06] rounded-lg p-3 max-h-36 overflow-y-auto font-mono text-xs space-y-1.5">
-                  {txLog.map((log, idx) => (
-                    <div key={idx} className="flex items-start gap-2">
-                      <span className="text-slate-600 text-[11px] select-none">[{log.time}]</span>
-                      <span
-                        className={
-                          log.type === "success"
-                            ? "text-emerald-400"
-                            : log.type === "warn"
-                            ? "text-amber-400"
-                            : "text-slate-300"
-                        }
-                      >
-                        {log.text}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
 
