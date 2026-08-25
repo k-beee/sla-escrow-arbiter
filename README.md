@@ -76,11 +76,12 @@ pytest tests/ -v
 
 ---
 
-## Deployed Contracts
+## Deployed Contracts (StudioNet)
 
-- **Network**: GenLayer StudioNet
-- **Contract Address**: [`0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219`](https://explorer-studio.genlayer.com/address/0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219)
-- **Contract Type**: `SLAEscrowArbiter`
+| Contract | Type | Address | Explorer Link |
+| :--- | :--- | :--- | :--- |
+| **SLAEscrowFactory** | Registry / Factory | `0x98216F20cb9C01d65fe9671F1C6ee19595F2711B` | [View on Explorer](https://explorer-studio.genlayer.com/address/0x98216F20cb9C01d65fe9671F1C6ee19595F2711B) |
+| **SLAEscrowArbiter** | Core Arbiter Instance | `0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219` | [View on Explorer](https://explorer-studio.genlayer.com/address/0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219) |
 
 ---
 
