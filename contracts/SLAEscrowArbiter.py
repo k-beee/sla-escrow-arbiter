@@ -10,6 +10,11 @@ STATUS_COMPLETED = "COMPLETED"
 STATUS_REFUNDED = "REFUNDED"
 
 
+def _normalize_address(addr: str) -> str:
+    """Normalize addresses to prevent casing/EIP-55 comparison mismatches."""
+    return addr.strip().lower()
+
+
 class SLAEscrowArbiter(gl.Contract):
     client: Address
     contractor: Address
