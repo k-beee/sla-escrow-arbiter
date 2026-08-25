@@ -1,9 +1,12 @@
 # SLAEscrowArbiter
 
+[![Live dApp](https://img.shields.io/badge/Live%20dApp-Vercel-success?style=flat&logo=vercel)](https://sla-escrow-arbiter-one.vercel.app/)
 [![GenLayer StudioNet](https://img.shields.io/badge/GenLayer-StudioNet%20Compatible-blue)](https://studio.genlayer.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **SLAEscrowArbiter** is an Intelligent Contract protocol built for GenLayer that automates milestone and SLA escrow settlement. It replaces centralized dispute middlemen with decentralized AI validator consensus over live web evidence (e.g. GitHub repositories, PRs, or API endpoints).
+
+🔗 **Live App**: [https://sla-escrow-arbiter-one.vercel.app/](https://sla-escrow-arbiter-one.vercel.app/)
 
 ---
 
