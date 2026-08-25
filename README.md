@@ -76,6 +76,14 @@ pytest tests/ -v
 
 ---
 
+## Deployed Contracts
+
+- **Network**: GenLayer StudioNet
+- **Contract Address**: [`0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219`](https://explorer-studio.genlayer.com/address/0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219)
+- **Contract Type**: `SLAEscrowArbiter`
+
+---
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
