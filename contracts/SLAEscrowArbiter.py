@@ -40,3 +40,16 @@ class SLAEscrowArbiter(gl.Contract):
         self.resolution_verdict = ""
         self.resolution_reasoning = ""
         self.confidence_bps = u256(0)
+
+    @gl.public.write.payable
+    def fund_escrow(self) -> None:
+        """Client deposits native GEN into the escrow."""
+        if _normalize_address(gl.message.sender_address.as_hex) != _normalize_address(self.client.as_hex):
+            gl.vm.UserError("Only the client can fund the escrow")
+        if self.status != STATUS_OPEN:
+            gl.vm.UserError(f"Cannot fund escrow in status: {self.status}")
+        if gl.message.value <= 0:
+            gl.vm.UserError("Deposit value must be greater than 0")
+
+        self.escrow_amount = gl.message.value
+        self.status = STATUS_CLAIMED
