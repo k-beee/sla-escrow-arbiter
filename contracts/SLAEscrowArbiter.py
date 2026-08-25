@@ -36,6 +36,20 @@ def _parse_verdict_json(raw: str) -> dict:
         return {}
 
 
+def _to_address(val) -> Address:
+    """Safely coerces Address, string, or hex int into a valid GenLayer Address object."""
+    if isinstance(val, Address):
+        return val
+    if isinstance(val, str):
+        return Address(val)
+    if isinstance(val, int):
+        hex_str = hex(val)
+        # Pad to 40 hex chars if needed
+        hex_body = hex_str[2:].rjust(40, "0")
+        return Address("0x" + hex_body)
+    return Address(str(val))
+
+
 def _normalize_address(addr: str) -> str:
     """Normalize addresses to prevent casing/EIP-55 comparison mismatches."""
     return addr.strip().lower()
@@ -62,8 +76,8 @@ class SLAEscrowArbiter(gl.Contract):
     def __init__(self, contractor: Address, deliverable_criteria: str):
         """Initializes the escrow contract with terms and assigned contractor."""
         self.client = gl.message.sender_address
-        self.contractor = contractor
-        self.deliverable_criteria = deliverable_criteria
+        self.contractor = _to_address(contractor)
+        self.deliverable_criteria = str(deliverable_criteria)
         self.evidence_url = ""
         self.escrow_amount = u256(0)
         self.status = STATUS_OPEN
