@@ -1,16 +1,25 @@
 "use client";
 
-import React from "react";
-import { Shield, ExternalLink, Wallet, CheckCircle2, GitBranch, Terminal } from "lucide-react";
+import React, { useState } from "react";
+import { Shield, ExternalLink, Wallet, CheckCircle2, GitBranch, Terminal, LogOut, ChevronDown } from "lucide-react";
 
 interface NavbarProps {
   connectedAccount: string | null;
-  onConnect: () => void;
+  onOpenConnectModal: () => void;
+  onDisconnect: () => void;
   activeRole: "client" | "contractor";
   onToggleRole: () => void;
 }
 
-export function Navbar({ connectedAccount, onConnect, activeRole, onToggleRole }: NavbarProps) {
+export function Navbar({
+  connectedAccount,
+  onOpenConnectModal,
+  onDisconnect,
+  activeRole,
+  onToggleRole,
+}: NavbarProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
   return (
     <header className="border-b border-white/[0.08] bg-[#06080d]/90 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -84,19 +93,44 @@ export function Navbar({ connectedAccount, onConnect, activeRole, onToggleRole }
             <ExternalLink className="w-3 h-3" />
           </a>
 
-          {/* Wallet button */}
-          <button
-            onClick={onConnect}
-            className="flex items-center space-x-2 bg-[#0e1626] hover:bg-[#152238] border border-[#00f0ff]/30 hover:border-[#00f0ff]/60 px-3.5 py-1.5 rounded-lg text-xs font-mono text-white transition-all shadow-[0_0_12px_rgba(0,240,255,0.08)]"
-          >
-            <Wallet className="w-3.5 h-3.5 text-[#00f0ff]" />
-            <span>
-              {connectedAccount
-                ? `${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`
-                : "Connect Wallet"}
-            </span>
-            {connectedAccount && <CheckCircle2 className="w-3 h-3 text-emerald-400 ml-0.5" />}
-          </button>
+          {/* Wallet Connection Button / Dropdown */}
+          <div className="relative">
+            {connectedAccount ? (
+              <div className="flex items-center">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center space-x-2 bg-[#0e1626] hover:bg-[#152238] border border-emerald-500/40 hover:border-emerald-400 px-3.5 py-1.5 rounded-lg text-xs font-mono text-white transition-all shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>{`${connectedAccount.slice(0, 6)}...${connectedAccount.slice(-4)}`}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-[#0b1018] border border-white/[0.08] rounded-xl shadow-2xl p-1 z-50 font-mono text-xs">
+                    <button
+                      onClick={() => {
+                        onDisconnect();
+                        setDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 transition-all"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Disconnect Wallet</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={onOpenConnectModal}
+                className="flex items-center space-x-2 bg-[#00f0ff] hover:bg-[#33f3ff] text-black font-bold px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all shadow-[0_0_15px_rgba(0,240,255,0.3)]"
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                <span>Connect Wallet</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </header>

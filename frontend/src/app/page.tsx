@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navbar } from "../components/Navbar";
+import { WalletModal } from "../components/WalletModal";
 import {
   ShieldCheck,
   Send,
@@ -19,33 +20,33 @@ import {
   Check,
   Copy,
   Layers,
-  TerminalSquare,
   HelpCircle,
   PlayCircle,
   X,
   ChevronDown,
   ChevronUp,
   Info,
+  Wallet,
 } from "lucide-react";
 
 export default function Home() {
   const [role, setRole] = useState<"client" | "contractor">("client");
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
   const [showWelcomeGuide, setShowWelcomeGuide] = useState<boolean>(true);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState<boolean>(false);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
-  // Accounts
-  const clientAddr = "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4";
-  const contractorAddr = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+  // Real Web3 Wallet state - Disconnected by default
+  const [account, setAccount] = useState<string | null>(null);
+
+  // Contract Addresses
   const arbiterAddress = "0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219";
   const factoryAddress = "0x98216F20cb9C01d65fe9671F1C6ee19595F2711B";
 
-  const currentAccount = role === "client" ? clientAddr : contractorAddr;
-
   // Escrow state representation
   const [escrowState, setEscrowState] = useState({
-    client: clientAddr,
-    contractor: contractorAddr,
+    client: "0x5B38Da6a701c568545dCfcB03FcB875f56beddC4",
+    contractor: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
     escrowAmount: "1.00",
     criteria: "The pull request must pass all unit tests and contain complete architectural documentation in docs/.",
     evidenceUrl: "https://github.com/torvalds/linux",
@@ -62,18 +63,38 @@ export default function Home() {
   const [evidenceInput, setEvidenceInput] = useState("https://github.com/torvalds/linux");
   const [txStep, setTxStep] = useState<"idle" | "signing" | "pending" | "FINALIZED">("idle");
   const [activePipelineStep, setActivePipelineStep] = useState<number>(0);
-  const [txLog, setTxLog] = useState<Array<{ time: string; text: string; type: "info" | "success" | "warn" }>>([
-    {
-      time: "10:44:12",
-      text: "SLAEscrowArbiter initialized on GenLayer StudioNet.",
-      type: "info",
-    },
-    {
-      time: "10:44:30",
-      text: "Escrow funded with 1.00 GEN by client 0x5B38...ddC4.",
-      type: "success",
-    },
-  ]);
+
+  // Browser Wallet Injection Detection
+  const handleConnectInjected = async () => {
+    if (typeof window !== "undefined" && (window as any).ethereum) {
+      try {
+        const accounts = await (window as any).ethereum.request({
+          method: "eth_requestAccounts",
+        });
+        if (accounts && accounts.length > 0) {
+          setAccount(accounts[0]);
+        }
+      } catch (err) {
+        console.error("User rejected wallet connection:", err);
+      }
+    } else {
+      alert("No Web3 browser wallet detected. You can select one of the StudioNet test accounts from the modal.");
+      setIsWalletModalOpen(true);
+    }
+  };
+
+  // Listen to MetaMask account switches
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).ethereum) {
+      (window as any).ethereum.on("accountsChanged", (accounts: string[]) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        } else {
+          setAccount(null);
+        }
+      });
+    }
+  }, []);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -86,6 +107,7 @@ export default function Home() {
   };
 
   const loadSamplePreset = () => {
+    setAccount("0x5B38Da6a701c568545dCfcB03FcB875f56beddC4");
     setDepositAmount("1.5");
     setEvidenceInput("https://github.com/torvalds/linux");
     setActiveTab("resolve");
@@ -93,43 +115,26 @@ export default function Home() {
   };
 
   const runAction = async (actionName: "fund" | "submit" | "resolve") => {
-    setTxStep("signing");
-    const now = () => new Date().toLocaleTimeString();
+    if (!account) {
+      setIsWalletModalOpen(true);
+      return;
+    }
 
-    setTxLog((prev) => [{ time: now(), text: `Requesting user signature for ${actionName}()...`, type: "info" }, ...prev]);
+    setTxStep("signing");
 
     setTimeout(() => {
       setTxStep("pending");
       setActivePipelineStep(1);
 
       if (actionName === "resolve") {
-        setTxLog((prev) => [
-          { time: now(), text: "Validators executing gl.nondet.web.render on evidence URL...", type: "info" },
-          ...prev,
-        ]);
-
         setTimeout(() => {
           setActivePipelineStep(2);
-          setTxLog((prev) => [
-            { time: now(), text: "Independent multi-validator LLM evaluation against criteria...", type: "info" },
-            ...prev,
-          ]);
-
           setTimeout(() => {
             setActivePipelineStep(3);
-            setTxLog((prev) => [
-              { time: now(), text: "Equivalence Principle validation: Outcome APPROVE, confidence Δ 350 bps (within ±15% tolerance).", type: "success" },
-              ...prev,
-            ]);
-
             setTimeout(() => {
               setActivePipelineStep(4);
               setTxStep("FINALIZED");
               setEscrowState((prev) => ({ ...prev, status: "COMPLETED" }));
-              setTxLog((prev) => [
-                { time: now(), text: "Settlement complete: Funds automatically released to contractor via emit_transfer.", type: "success" },
-                ...prev,
-              ]);
             }, 1000);
           }, 1200);
         }, 1200);
@@ -137,20 +142,12 @@ export default function Home() {
         setTimeout(() => {
           setTxStep("FINALIZED");
           setEscrowState((prev) => ({ ...prev, status: "CLAIMED", escrowAmount: depositAmount }));
-          setTxLog((prev) => [
-            { time: now(), text: `Deposit of ${depositAmount} GEN confirmed and locked in escrow.`, type: "success" },
-            ...prev,
-          ]);
           setActiveTab("submit");
         }, 1200);
       } else if (actionName === "submit") {
         setTimeout(() => {
           setTxStep("FINALIZED");
           setEscrowState((prev) => ({ ...prev, evidenceUrl: evidenceInput }));
-          setTxLog((prev) => [
-            { time: now(), text: `Deliverable evidence URL registered: ${evidenceInput}`, type: "success" },
-            ...prev,
-          ]);
           setActiveTab("resolve");
         }, 1200);
       }
@@ -173,12 +170,20 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#06080d] text-slate-200">
+    <div className="min-h-screen flex flex-col bg-[#05070c] text-slate-200">
       <Navbar
-        connectedAccount={currentAccount}
-        onConnect={handleToggleRole}
+        connectedAccount={account}
+        onOpenConnectModal={() => setIsWalletModalOpen(true)}
+        onDisconnect={() => setAccount(null)}
         activeRole={role}
         onToggleRole={handleToggleRole}
+      />
+
+      <WalletModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+        onSelectAccount={(addr) => setAccount(addr)}
+        onConnectInjected={handleConnectInjected}
       />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
@@ -480,7 +485,26 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Step 1: Fund Tab with Helper Instructions */}
+              {/* Wallet Disconnected Notice inside form if not connected */}
+              {!account && (
+                <div className="p-4 rounded-xl bg-[#0f1726] border border-[#00f0ff]/30 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <Wallet className="w-5 h-5 text-[#00f0ff]" />
+                    <div className="text-xs">
+                      <div className="font-bold text-white font-mono">Wallet Disconnected</div>
+                      <div className="text-slate-400">Connect your Web3 or test wallet to execute transactions.</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsWalletModalOpen(true)}
+                    className="px-3.5 py-1.5 rounded-lg bg-[#00f0ff] hover:bg-[#33f3ff] text-black font-bold text-xs font-mono shrink-0 transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)]"
+                  >
+                    Connect
+                  </button>
+                </div>
+              )}
+
+              {/* Step 1: Fund Tab */}
               {activeTab === "fund" && (
                 <div className="space-y-4">
                   <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#00f0ff]/5 border border-[#00f0ff]/20 text-xs text-slate-300">
@@ -510,12 +534,12 @@ export default function Home() {
                     className="w-full py-3 px-4 rounded-lg bg-[#00f0ff] hover:bg-[#33f3ff] text-black font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-sm"
                   >
                     <Lock className="w-4 h-4" />
-                    <span>Deposit &amp; Lock Native GEN</span>
+                    <span>{account ? "Deposit & Lock Native GEN" : "Connect Wallet to Deposit"}</span>
                   </button>
                 </div>
               )}
 
-              {/* Step 2: Submit Tab with Helper Instructions */}
+              {/* Step 2: Submit Tab */}
               {activeTab === "submit" && (
                 <div className="space-y-4">
                   <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#00f0ff]/5 border border-[#00f0ff]/20 text-xs text-slate-300">
@@ -545,12 +569,12 @@ export default function Home() {
                     className="w-full py-3 px-4 rounded-lg bg-[#00f0ff] hover:bg-[#33f3ff] text-black font-bold text-xs font-mono uppercase tracking-wider flex items-center justify-center space-x-2 transition-all shadow-sm"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Submit Deliverable for Adjudication</span>
+                    <span>{account ? "Submit Deliverable URL" : "Connect Wallet to Submit"}</span>
                   </button>
                 </div>
               )}
 
-              {/* Step 3: Resolve Tab with Helper Instructions */}
+              {/* Step 3: Resolve Tab */}
               {activeTab === "resolve" && (
                 <div className="space-y-4">
                   <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#00f0ff]/5 border border-[#00f0ff]/20 text-xs text-slate-300">
@@ -593,13 +617,12 @@ export default function Home() {
                     ) : (
                       <>
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Execute resolve_milestone() Consensus</span>
+                        <span>{account ? "Execute resolve_milestone() Consensus" : "Connect Wallet to Resolve"}</span>
                       </>
                     )}
                   </button>
                 </div>
               )}
-
             </div>
           </div>
 
