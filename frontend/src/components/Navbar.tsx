@@ -7,17 +7,20 @@ interface NavbarProps {
   connectedAccount: string | null;
   onOpenConnectModal: () => void;
   onDisconnect: () => void;
-  activeRole: "client" | "contractor";
-  onToggleRole: () => void;
+  activeRole?: "client" | "contractor";
+  role?: "client" | "contractor";
+  onToggleRole?: () => void;
 }
 
 export function Navbar({
   connectedAccount,
   onOpenConnectModal,
   onDisconnect,
-  activeRole,
-  onToggleRole,
+  activeRole = "client",
+  role,
+  onToggleRole = () => {},
 }: NavbarProps) {
+  const currentRole = role || activeRole;
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (

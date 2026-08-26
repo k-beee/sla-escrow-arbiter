@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm --prefix frontend run dev",
-    "build": "npm --prefix frontend install --include=dev && npm --prefix frontend run build",
-    "start": "npm --prefix frontend start"
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm start"
   },
   "dependencies": {
     "@types/node": "^20.14.9",
