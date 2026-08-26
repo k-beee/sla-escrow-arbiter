@@ -61,17 +61,32 @@ class TestEscrowLogicSimulation:
                 return False
             return abs(leader.get("confidence_bps", 0) - validator.get("confidence_bps", 0)) <= 1500
 
-        # Close confidence -> agreement
         l1 = {"verdict": "APPROVE", "confidence_bps": 8500}
         v1 = {"verdict": "APPROVE", "confidence_bps": 8000}
         assert check_agreement(l1, v1) is True
 
-        # Divergent verdict -> reject
         l2 = {"verdict": "APPROVE", "confidence_bps": 8500}
         v2 = {"verdict": "REJECT", "confidence_bps": 8500}
         assert check_agreement(l2, v2) is False
 
-        # Divergent confidence beyond tolerance -> reject
         l3 = {"verdict": "APPROVE", "confidence_bps": 9000}
         v3 = {"verdict": "APPROVE", "confidence_bps": 7000}
         assert check_agreement(l3, v3) is False
+
+
+class TestEscrowTerminalGuards:
+    def test_cannot_resolve_completed_or_refunded(self):
+        def can_resolve(status: str, escrow_amount: int) -> bool:
+            if status in ["COMPLETED", "REFUNDED", "RESOLVING"]:
+                return False
+            if status != "CLAIMED":
+                return False
+            if escrow_amount <= 0:
+                return False
+            return True
+
+        assert can_resolve("COMPLETED", 0) is False
+        assert can_resolve("REFUNDED", 0) is False
+        assert can_resolve("RESOLVING", 1000) is False
+        assert can_resolve("OPEN", 1000) is False
+        assert can_resolve("CLAIMED", 1000) is True

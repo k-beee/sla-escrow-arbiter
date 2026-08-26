@@ -44,7 +44,6 @@ def _to_address(val) -> Address:
         return Address(val)
     if isinstance(val, int):
         hex_str = hex(val)
-        # Pad to 40 hex chars if needed
         hex_body = hex_str[2:].rjust(40, "0")
         return Address("0x" + hex_body)
     return Address(str(val))
@@ -107,22 +106,31 @@ class SLAEscrowArbiter(gl.Contract):
             gl.vm.UserError("Only the contractor can submit deliverable")
         if self.status != STATUS_CLAIMED:
             gl.vm.UserError("Escrow must be funded before deliverable submission")
-        if not evidence_url.startswith("http://") and not evidence_url.startswith("https://"):
+        clean_url = evidence_url.strip()
+        if not clean_url.startswith("http://") and not clean_url.startswith("https://"):
             gl.vm.UserError("Evidence URL must be a valid HTTP/HTTPS endpoint")
+        if len(clean_url) > 500:
+            gl.vm.UserError("Evidence URL exceeds maximum length of 500 characters")
 
-        self.evidence_url = evidence_url
+        self.evidence_url = clean_url
 
     @gl.public.write
     def resolve_milestone(self) -> None:
         """
         Validators fetch live evidence from the evidence URL, evaluate against
         deliverable criteria, and agree on whether to release funds or refund.
+        Guarded against double payouts and reentrancy.
         """
+        if self.status in [STATUS_COMPLETED, STATUS_REFUNDED, STATUS_RESOLVING]:
+            gl.vm.UserError(f"Escrow already in terminal or processing state: {self.status}")
         if self.status != STATUS_CLAIMED:
-            gl.vm.UserError("Escrow not ready for resolution")
+            gl.vm.UserError("Escrow not funded or not ready for resolution")
         if len(self.evidence_url) == 0:
             gl.vm.UserError("No evidence URL submitted")
+        if int(self.escrow_amount) <= 0:
+            gl.vm.UserError("Escrow has 0 balance or funds have already been disbursed")
 
+        # Set processing state lock
         self.status = STATUS_RESOLVING
         evidence_url = self.evidence_url
         criteria = self.deliverable_criteria
@@ -173,11 +181,9 @@ Respond ONLY with a JSON object in this exact schema:
             }
 
         def validate_verdict(leader_out: dict) -> bool:
-            # Validator independently checks if leader's verdict matches its evaluation
             my_out = eval_task()
             if leader_out.get("verdict") != my_out.get("verdict"):
                 return False
-            # Confidence must match within a 15% tolerance window
             leader_conf = leader_out.get("confidence_bps", 0)
             my_conf = my_out.get("confidence_bps", 0)
             return abs(leader_conf - my_conf) <= 1500
@@ -194,17 +200,16 @@ Respond ONLY with a JSON object in this exact schema:
         self.resolution_reasoning = reasoning
         self.resolved_at = gl.message_raw.get("datetime", "")
 
-        # Execute payout or refund based on consensus verdict
+        # Execute payout or refund based on consensus verdict (Checks-Effects-Interactions)
+        current_amount = self.escrow_amount
+        self.escrow_amount = u256(0)
+
         if verdict == "APPROVE" and conf >= CONFIDENCE_THRESHOLD_BPS:
             self.status = STATUS_COMPLETED
-            payout_val = self.escrow_amount
-            self.escrow_amount = u256(0)
-            gl.chain.Account(self.contractor).emit_transfer(payout_val)
+            gl.chain.Account(self.contractor).emit_transfer(current_amount)
         else:
             self.status = STATUS_REFUNDED
-            refund_val = self.escrow_amount
-            self.escrow_amount = u256(0)
-            gl.chain.Account(self.client).emit_transfer(refund_val)
+            gl.chain.Account(self.client).emit_transfer(current_amount)
 
     @gl.public.view
     def get_escrow_details(self) -> dict:
