@@ -84,7 +84,7 @@ pytest tests/ -v
 | Contract | Type | Address | Explorer Link |
 | :--- | :--- | :--- | :--- |
 | **SLAEscrowFactory** | Registry / Factory | `0x98216F20cb9C01d65fe9671F1C6ee19595F2711B` | [View on Explorer](https://explorer-studio.genlayer.com/address/0x98216F20cb9C01d65fe9671F1C6ee19595F2711B) |
-| **SLAEscrowArbiter** | Core Arbiter Instance | `0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219` | [View on Explorer](https://explorer-studio.genlayer.com/address/0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219) |
+| **SLAEscrowArbiter** | Core Arbiter Instance | `0xEc8245c3B1f002A903BC58357e0b9C707C5fe365` | [View on Explorer](https://explorer-studio.genlayer.com/address/0xEc8245c3B1f002A903BC58357e0b9C707C5fe365) |
 
 ---
 

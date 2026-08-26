@@ -53,7 +53,7 @@ export default function Home() {
   const [account, setAccount] = useState<string | null>(null);
 
   // Deployed Contract Addresses on StudioNet
-  const arbiterAddress = "0xC7e04361224f5d3336Ac3851F65E8f0d09C5B219";
+  const arbiterAddress = "0xEc8245c3B1f002A903BC58357e0b9C707C5fe365";
   const factoryAddress = "0x98216F20cb9C01d65fe9671F1C6ee19595F2711B";
 
   // Escrow state - derived directly from smart contract storage
